@@ -10,5 +10,16 @@ export default defineConfig({
   format: ['esm'],
   splitting: false,
   target: 'esnext',
-  external: ['varlock'],
+  external: ['varlock', 'argon2'],
+  banner: ({ format }) => {
+    if (format === 'esm') {
+      return ({
+        js: [
+          'import { createRequire } from \'module\';',
+          'const require = createRequire(import.meta.url);',
+        ].join('\n'),
+      });
+    }
+    return {};
+  },
 });

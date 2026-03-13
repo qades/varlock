@@ -1,8 +1,27 @@
 import * as kdbxweb from 'kdbxweb';
+import argon2 from 'argon2';
 import fs from 'node:fs';
 
 const { debug } = plugin;
 const { ResolutionError } = plugin.ERRORS;
+
+// Register Argon2 implementation for KDBX 4.0 support.
+// kdbxweb doesn't bundle one — it must be provided externally.
+kdbxweb.CryptoEngine.setArgon2Impl(async (
+  password, salt, memory, iterations, length, parallelism, type, _version,
+) => {
+  const hashType = type === 0 ? argon2.argon2d : argon2.argon2id;
+  const result = await argon2.hash(Buffer.from(password), {
+    type: hashType,
+    salt: Buffer.from(salt),
+    memoryCost: memory,
+    timeCost: iterations,
+    hashLength: length,
+    parallelism,
+    raw: true,
+  });
+  return result.buffer.slice(result.byteOffset, result.byteOffset + result.byteLength) as ArrayBuffer;
+});
 
 /**
  * Read a key file and return its contents as an ArrayBuffer for kdbxweb credentials.

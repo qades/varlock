@@ -46,6 +46,9 @@
   "peerDependencies": {
     "varlock": "workspace:^"
   },
+  "dependencies": {
+    "argon2": "^0.44.0"
+  },
   "devDependencies": {
     "@env-spec/utils": "workspace:^",
     "@types/node": "catalog:",
