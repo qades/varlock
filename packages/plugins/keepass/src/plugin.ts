@@ -1,6 +1,6 @@
 import { Resolver } from 'varlock/plugin-lib';
 
-import { KdbxReader } from './kdbx-reader';
+import { KdbxReader, sanitizeEnvKey } from './kdbx-reader';
 import { configureCliAuth, kpCliRead, kpCliList } from './cli-helper';
 
 const { ValidationError, SchemaError, ResolutionError } = plugin.ERRORS;
@@ -89,7 +89,7 @@ class KeePassPluginInstance {
       const result: Record<string, string> = {};
       await Promise.all(entries.map(async (path) => {
         try {
-          result[path] = await kpCliRead(path, attribute);
+          result[sanitizeEnvKey(path, attribute)] = await kpCliRead(path, attribute);
         } catch {
           // Skip entries that don't have the requested attribute
         }

@@ -5,11 +5,22 @@ import fs from 'node:fs';
 const { debug } = plugin;
 const { ResolutionError } = plugin.ERRORS;
 
+/** Sanitize a KeePass entry path into a valid env var name, optionally suffixing non-default attributes */
+export function sanitizeEnvKey(path: string, attribute?: string): string {
+  let key = path
+    .replace(/[^a-zA-Z0-9_]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '')
+    .toUpperCase();
+  if (attribute && attribute !== 'Password') {
+    key += `_${attribute.replace(/[^a-zA-Z0-9_]/g, '_').toUpperCase()}`;
+  }
+  return key;
+}
+
 // Register Argon2 implementation for KDBX 4.0 support.
 // kdbxweb doesn't bundle one — it must be provided externally.
-kdbxweb.CryptoEngine.setArgon2Impl(async (
-  password, salt, memory, iterations, length, parallelism, type, _version,
-) => {
+kdbxweb.CryptoEngine.setArgon2Impl(async (password, salt, memory, iterations, length, parallelism, type, _version) => {
   const hashType = type === 0 ? argon2.argon2d : argon2.argon2id;
   const result = await argon2.hash(Buffer.from(password), {
     type: hashType,
@@ -205,7 +216,7 @@ export class KdbxReader {
 
     await Promise.all(entryPaths.map(async (path) => {
       try {
-        result[path] = await this.readEntry(path, attribute);
+        result[sanitizeEnvKey(path, attribute)] = await this.readEntry(path, attribute);
       } catch {
         // Skip entries that don't have the requested attribute
       }
